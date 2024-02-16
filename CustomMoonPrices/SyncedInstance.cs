@@ -70,7 +70,8 @@ namespace LCCustomMoonPrices
             {
                 try
                 {
-                    return (T)binaryFormatter.Deserialize((Stream)serializationStream);
+                    CustomMoonPricesMain.CMPLogger.LogMessage("Deserializing instance...");
+                    return (T)binaryFormatter.Deserialize(serializationStream);
                 }
                 catch (Exception ex)
                 {

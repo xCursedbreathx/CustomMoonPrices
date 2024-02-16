@@ -25,7 +25,7 @@ namespace CustomMoonPrices
 
 
 
-        public static Config SyncedCofig;
+        //public static Config SyncedConfig;
 
         public static ManualLogSource CMPLogger;
 
@@ -35,6 +35,9 @@ namespace CustomMoonPrices
             harmony = new Harmony("zz.cursedbreath.custommoonprices");
 
             LethalConfigSettings = this.Config;
+
+            new Config();
+            //SyncedConfig = new Config();
 
             harmony.PatchAll(typeof (MoonPricePatches));
             harmony.PatchAll(typeof (Config));

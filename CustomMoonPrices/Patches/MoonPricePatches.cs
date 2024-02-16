@@ -90,21 +90,21 @@ namespace CustomMoonPrices.Patches
                     {
                         bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
 
-                        CustomMoonPricesMain.SyncedCofig.updateMoonEnabled(configname, ConfigEnabledMoons);
+                        Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
                     };
 
                     ConfigEntryPrice.SettingChanged += (sender, e) =>
                     {
                         int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
 
-                        CustomMoonPricesMain.SyncedCofig.updateMoonPrice(configname, ConfigPriceMoons);
+                        Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
                     };
 
                     CustomMoonPricesMain.LethalConfigSettings.Save();
 
-                    Config.moonPriceEnabled[configname] = ConfigEntry.Value;
+                    Config.Instance.moonPriceEnabled[configname] = ConfigEntry.Value;
 
-                    Config.moonPrice[configname] = ConfigEntryPrice.Value;
+                    Config.Instance.moonPrice[configname] = ConfigEntryPrice.Value;
 
                     var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
 
@@ -117,7 +117,13 @@ namespace CustomMoonPrices.Patches
 
             }
 
-            CustomMoonPricesMain.SyncedCofig = new Config();
+            foreach(TerminalNode node in MoonPricePatches.terminal.terminalNodes.terminalNodes)
+            {
+                if (node.buyRerouteToMoon != -2)
+                {
+                    
+                }
+            }
 
         }
 
@@ -136,7 +142,7 @@ namespace CustomMoonPrices.Patches
                 moonname = moonname.Replace("route", "");
             }
 
-            if (moonname.Contains("Route") && moonname.Contains("Confirm"))
+            if (moonname.Contains("Route") || moonname.Contains("Confirm"))
             {
                 moonname = moonname.Replace("Route", "");
                 moonname = moonname.Replace("Confirm", "");
@@ -144,23 +150,17 @@ namespace CustomMoonPrices.Patches
 
             moonname = GetMoonName(moonname);
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("MoonName: " + moonname);
-
             if (moonname == null)
             {
-                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
+                CustomMoonPricesMain.CMPLogger.LogError("Moon not found (Just a Reminder when not a moon node)!");
                 return;
             }
 
-            bool isCustomPrice = Config.moonPriceEnabled[moonname];
-
-            int customPrice = Config.moonPrice[moonname];
-
-            if (isCustomPrice)
+            if (Config.Instance.moonPriceEnabled[moonname])
             {
                 totalCostOfItems = (int)terminalTraverse.GetValue();
 
-                terminalTraverse.SetValue(customPrice);
+                terminalTraverse.SetValue(Config.Instance.moonPrice[moonname]);
             }
 
         }
@@ -169,20 +169,72 @@ namespace CustomMoonPrices.Patches
         [HarmonyPostfix]
         private static void LoadNewNodePatchAfter(ref TerminalNode node)
         {
-            Traverse terminalTraverse = Traverse.Create(MoonPricePatches.terminal).Field("totalCostOfItems");
 
-            terminalTraverse.SetValue(totalCostOfItems);
+            if(MoonPricePatches.totalCostOfItems == -5) return;
 
-            CustomMoonPricesMain.CMPLogger.LogError("traverseValueFinish: " + terminalTraverse.GetValue());
+            String moonname = node.name;
+
+            if (moonname.Contains("route"))
+            {
+                moonname = moonname.Replace("route", "");
+            }
+
+            if (moonname.Contains("Route") || moonname.Contains("Confirm"))
+            {
+                moonname = moonname.Replace("Route", "");
+                moonname = moonname.Replace("Confirm", "");
+            }
+
+            moonname = GetMoonName(moonname);
+
+            if (moonname == null)
+            {
+                CustomMoonPricesMain.CMPLogger.LogError("Moon not found (Just a Reminder when not a moon node)!");
+                return;
+            }
+
+            if (Config.Instance.moonPriceEnabled[moonname])
+            {
+
+                Traverse terminalTraverse = Traverse.Create(MoonPricePatches.terminal).Field("totalCostOfItems");
+
+                terminalTraverse.SetValue(Config.Instance.moonPrice[moonname]);
+
+            }
 
             totalCostOfItems = -5;
         }
+
 
         [HarmonyPatch("LoadNewNodeIfAffordable")]
         [HarmonyPrefix]
         private static void LoadNewNodeIfAffordablePatch(ref TerminalNode node)
         {
-            node.itemCost = 0;
+            if (node == null || node.buyRerouteToMoon == -1)
+                return;
+
+            CustomMoonPricesMain.CMPLogger.LogMessage("NodeName: " + node.name);
+
+            String moonname = node.name;
+
+            if (moonname.Contains("route"))
+            {
+                moonname = moonname.Replace("route", "");
+            }
+
+            if (moonname.Contains("Route") || moonname.Contains("Confirm"))
+            {
+                moonname = moonname.Replace("Route", "");
+                moonname = moonname.Replace("Confirm", "");
+            }
+
+            moonname = GetMoonName(moonname);
+
+            if (Config.Instance.moonPriceEnabled[moonname])
+            {
+                node.itemCost = Config.Instance.moonPrice[moonname];
+            }
+
         }
 
     }
