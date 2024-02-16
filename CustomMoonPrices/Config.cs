@@ -23,6 +23,26 @@ namespace CustomMoonPrices
             InitInstance(this);
         }
 
+        public void updateMoonEnabled(string moonname, bool enabled)
+        {
+            moonPriceEnabled[moonname] = enabled;
+
+            using (FastBufferWriter messageStream = new FastBufferWriter(SyncedInstance<Config>.IntSize, Allocator.Temp))
+
+                MessageManager.SendNamedMessageToAll("CustomMoonPrices_ResyncConfigOnChange", messageStream);
+
+        }
+
+        public void updateMoonPrice(string moonname, int price)
+        {
+            moonPrice[moonname] = price;
+
+            using (FastBufferWriter messageStream = new FastBufferWriter(SyncedInstance<Config>.IntSize, Allocator.Temp))
+
+                MessageManager.SendNamedMessageToAll("CustomMoonPrices_ResyncConfigOnChange", messageStream);
+
+        }
+
         public void updateMoon(string moonname, bool enabled, int price)
         {
 

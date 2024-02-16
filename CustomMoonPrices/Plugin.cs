@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using CustomMoonPrices.Patches;
 using HarmonyLib;
 using System;
 
@@ -22,15 +23,21 @@ namespace CustomMoonPrices
 
         public static ConfigFile LethalConfigSettings;
 
-        public static Config Config;
+
+
+        public static Config SyncedCofig;
 
         public static ManualLogSource CMPLogger;
 
         private void Awake()
         {
             CMPLogger = Logger;
-            harmony = new Harmony(UMID);
-            harmony.PatchAll();
+            harmony = new Harmony("zz.cursedbreath.custommoonprices");
+
+            LethalConfigSettings = this.Config;
+
+            harmony.PatchAll(typeof (MoonPricePatches));
+            harmony.PatchAll(typeof (Config));
         }
 
     }

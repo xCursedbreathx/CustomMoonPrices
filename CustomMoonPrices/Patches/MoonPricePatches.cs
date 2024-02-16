@@ -2,15 +2,12 @@
 using LethalConfig.ConfigItems;
 using LethalConfig;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace CustomMoonPrices.Patches
 {
-    internal class MoonPricePatches
+    [HarmonyPatch(typeof(Terminal))]
+    public class MoonPricePatches
     {
 
         public static Terminal terminal;
@@ -93,18 +90,14 @@ namespace CustomMoonPrices.Patches
                     {
                         bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
 
-                        int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
-
-                        CustomMoonPricesMain.Config.updateMoon(configname, ConfigEnabledMoons, ConfigPriceMoons);
+                        CustomMoonPricesMain.SyncedCofig.updateMoonEnabled(configname, ConfigEnabledMoons);
                     };
 
                     ConfigEntryPrice.SettingChanged += (sender, e) =>
                     {
-                        bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
-
                         int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
 
-                        CustomMoonPricesMain.Config.updateMoon(configname, ConfigEnabledMoons, ConfigPriceMoons);
+                        CustomMoonPricesMain.SyncedCofig.updateMoonPrice(configname, ConfigPriceMoons);
                     };
 
                     CustomMoonPricesMain.LethalConfigSettings.Save();
@@ -124,7 +117,7 @@ namespace CustomMoonPrices.Patches
 
             }
 
-            CustomMoonPricesMain.Config = new Config();
+            CustomMoonPricesMain.SyncedCofig = new Config();
 
         }
 
@@ -149,9 +142,9 @@ namespace CustomMoonPrices.Patches
                 moonname = moonname.Replace("Confirm", "");
             }
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("MoonName: " + moonname);
-
             moonname = GetMoonName(moonname);
+
+            CustomMoonPricesMain.CMPLogger.LogMessage("MoonName: " + moonname);
 
             if (moonname == null)
             {
@@ -168,8 +161,6 @@ namespace CustomMoonPrices.Patches
                 totalCostOfItems = (int)terminalTraverse.GetValue();
 
                 terminalTraverse.SetValue(customPrice);
-
-                node.itemCost = customPrice;
             }
 
         }
@@ -191,41 +182,7 @@ namespace CustomMoonPrices.Patches
         [HarmonyPrefix]
         private static void LoadNewNodeIfAffordablePatch(ref TerminalNode node)
         {
-            if (node.buyRerouteToMoon == -1) return;
-
-            String moonname = node.name.Replace("Route", "");
-
-            if (moonname.Contains("route"))
-            {
-                moonname = moonname.Replace("route", "");
-            }
-
-            if (moonname.Contains("Confirm"))
-            {
-                moonname = moonname.Replace("Confirm", "");
-            }
-
-            moonname = GetMoonName(moonname);
-
-            if (moonname == null)
-            {
-                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
-                return;
-            }
-
-            bool isCustomPrice = Config.moonPriceEnabled[moonname];
-
-            int customPrice = Config.moonPrice[moonname];
-
-            CustomMoonPricesMain.CMPLogger.LogMessage("isCustomPrice for "+ moonname +" enabled: " + isCustomPrice);
-
-            CustomMoonPricesMain.CMPLogger.LogMessage("customPrice " + moonname + " price: " + customPrice);
-
-            if (isCustomPrice)
-            {
-                node.itemCost = customPrice;
-            }
-
+            node.itemCost = 0;
         }
 
     }
