@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using CustomMoonPrices.Patches;
 using HarmonyLib;
 using System;
+using Unity.Netcode;
 
 namespace CustomMoonPrices
 {
@@ -40,7 +41,45 @@ namespace CustomMoonPrices
             //SyncedConfig = new Config();
 
             harmony.PatchAll(typeof (MoonPricePatches));
-            harmony.PatchAll(typeof (Config));
+            harmony.PatchAll(typeof (ConfigSyncPatch));
+
+
+        }
+
+    }
+
+    [Serializable]
+    public class moonData
+    {
+
+
+        private bool enabled;
+        private int price;
+
+        public moonData(bool enabled, int price)
+        {
+            this.enabled = enabled;
+            this.price = price;
+        }
+
+        public bool getEnabled()
+        {
+            return enabled;
+        }
+
+        public int getPrice()
+        {
+            return price;
+        }
+
+        public void setEnabled(bool enabled)
+        {
+            this.enabled = enabled;
+        }
+
+        public void setPrice(int price)
+        {
+            this.price = price;
         }
 
     }

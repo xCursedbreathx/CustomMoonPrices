@@ -102,9 +102,7 @@ namespace CustomMoonPrices.Patches
 
                     CustomMoonPricesMain.LethalConfigSettings.Save();
 
-                    Config.Instance.moonPriceEnabled[configname] = ConfigEntry.Value;
-
-                    Config.Instance.moonPrice[configname] = ConfigEntryPrice.Value;
+                    Config.Instance.moonData[configname] = new moonData(ConfigEntry.Value, ConfigEntryPrice.Value);
 
                     var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
 
@@ -156,11 +154,11 @@ namespace CustomMoonPrices.Patches
                 return;
             }
 
-            if (Config.Instance.moonPriceEnabled[moonname])
+            if (Config.Instance.moonData[moonname].getEnabled())
             {
                 totalCostOfItems = (int)terminalTraverse.GetValue();
 
-                terminalTraverse.SetValue(Config.Instance.moonPrice[moonname]);
+                terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
             }
 
         }
@@ -193,12 +191,12 @@ namespace CustomMoonPrices.Patches
                 return;
             }
 
-            if (Config.Instance.moonPriceEnabled[moonname])
+            if (Config.Instance.moonData[moonname].getEnabled())
             {
 
                 Traverse terminalTraverse = Traverse.Create(MoonPricePatches.terminal).Field("totalCostOfItems");
 
-                terminalTraverse.SetValue(Config.Instance.moonPrice[moonname]);
+                terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
 
             }
 
@@ -230,9 +228,9 @@ namespace CustomMoonPrices.Patches
 
             moonname = GetMoonName(moonname);
 
-            if (Config.Instance.moonPriceEnabled[moonname])
+            if (Config.Instance.moonData[moonname].getEnabled())
             {
-                node.itemCost = Config.Instance.moonPrice[moonname];
+                node.itemCost = Config.Instance.moonData[moonname].getPrice();
             }
 
         }

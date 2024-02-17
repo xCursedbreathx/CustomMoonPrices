@@ -1,11 +1,6 @@
-﻿using GameNetcodeStuff;
-using HarmonyLib;
-using LCCustomMoonPrices;
+﻿using LCCustomMoonPrices;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Netcode;
 
@@ -15,15 +10,12 @@ namespace CustomMoonPrices
     public class Config : SyncedInstance<Config>
     {
         
-        public Dictionary<string, bool> moonPriceEnabled;
-
-        public Dictionary<string, int> moonPrice;
+        public Dictionary<string, moonData> moonData;
 
         public Config()
         {
             InitInstance(this);
-            moonPriceEnabled = new Dictionary<string, bool>();
-            moonPrice = new Dictionary<string, int>();
+            moonData = new Dictionary<string, moonData>();
         }
 
         public void updateMoonEnabled(string moonname, bool enabled)
@@ -31,13 +23,11 @@ namespace CustomMoonPrices
 
             if (!IsHost) return;
 
-            moonPriceEnabled[moonname] = enabled;
+            Config.Instance.moonData[moonname].setEnabled(enabled);
 
-            InitInstance(this);
+            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
 
-            using (FastBufferWriter messageStream = new FastBufferWriter(SyncedInstance<Config>.IntSize, Allocator.Temp))
-
-                MessageManager.SendNamedMessageToAll("CustomMoonPrices_ResyncConfigOnChange", messageStream);
+                MessageManager.SendNamedMessageToAll("CMP_SC", messageStream);
 
         }
 
@@ -46,104 +36,98 @@ namespace CustomMoonPrices
 
             if (!IsHost) return;
 
-            moonPrice[moonname] = price;
+            Config.Instance.moonData[moonname].setPrice(price);
 
-            InitInstance(this);
+            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
 
-            using (FastBufferWriter messageStream = new FastBufferWriter(SyncedInstance<Config>.IntSize, Allocator.Temp))
-
-                MessageManager.SendNamedMessageToAll("CustomMoonPrices_ResyncConfigOnChange", messageStream);
+                MessageManager.SendNamedMessageToAll("CMP_SC", messageStream);
 
         }
 
         public static void RequestSync()
         {
-            CustomMoonPricesMain.CMPLogger.LogMessage("Requesting sync");
+            CustomMoonPricesMain.CMPLogger.LogMessage("Requesting config sync...");
 
-            if (!SyncedInstance<Config>.IsClient) return;
+            if (!IsClient) return;
 
-            using (FastBufferWriter messageStream = new FastBufferWriter(SyncedInstance<Config>.IntSize, Allocator.Temp))
-                SyncedInstance<Config>.MessageManager.SendNamedMessage("CustomMoonPrices_OnRequestConfigSync", 0UL, messageStream);
+            CustomMoonPricesMain.CMPLogger.LogMessage("Sending request to host...");
+
+            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
+                MessageManager.SendNamedMessage("CMP_ORCS", 0UL, messageStream);
+
+            CustomMoonPricesMain.CMPLogger.LogMessage("Sending request to host completed");
         }
 
         public static void OnRequestSync(ulong clientId, FastBufferReader _)
         {
-            CustomMoonPricesMain.CMPLogger.LogMessage("Incoming Sync Request by: " + clientId);
-            if (!SyncedInstance<Config>.IsHost) return;
-            byte[] bytes = SyncedInstance<Config>.SerializeToBytes(SyncedInstance<Config>.Instance);
+
+            if (!IsHost) return;
+
+            byte[] bytes = SerializeToBytes(Instance);
             int length = bytes.Length;
-            using (FastBufferWriter messageStream = new FastBufferWriter(length + SyncedInstance<Config>.IntSize, Allocator.Temp))
+            using (FastBufferWriter messageStream = new FastBufferWriter(length + IntSize, Allocator.Temp))
             {
+
+                CustomMoonPricesMain.CMPLogger.LogMessage("Trying to Write Config into Stream");
+
                 try
                 {
                     messageStream.WriteValueSafe<int>(in length, new FastBufferWriter.ForPrimitives());
                     messageStream.WriteBytesSafe(bytes);
-                    SyncedInstance<Config>.MessageManager.SendNamedMessage("CustomMoonPrices_OnReceiveConfigSync", clientId, messageStream);
+
+                    MessageManager.SendNamedMessage("CMP_ORS", clientId, messageStream);
                 }
                 catch (Exception ex)
                 {
-                    CustomMoonPricesMain.CMPLogger.LogDebug((object)string.Format("Error occurred syncing config with client: {0}\n{1}", (object)clientId, (object)ex));
+                    CustomMoonPricesMain.CMPLogger.LogDebug(string.Format("Error occurred syncing config with client: {0}\n{1}", clientId, ex));
                 }
             }
+
         }
 
         public static void OnReceiveSync(ulong _, FastBufferReader reader)
         {
-            CustomMoonPricesMain.CMPLogger.LogMessage("Incoming Sync from: " + _);
-
-            if (!reader.TryBeginRead(SyncedInstance<Config>.IntSize))
+            if (!reader.TryBeginRead(IntSize))
             {
                 CustomMoonPricesMain.CMPLogger.LogError("Config sync error: Could not begin reading buffer.");
+                return;
             }
-            else
+
+            reader.ReadValueSafe(out int val, default);
+            if (!reader.TryBeginRead(val))
             {
-                int length;
-                reader.ReadValueSafe<int>(out length, new FastBufferWriter.ForPrimitives());
-                if (!reader.TryBeginRead(length))
-                {
-                    CustomMoonPricesMain.CMPLogger.LogError("Config sync error: Host could not sync.");
-                }
-                else
-                {
-                    byte[] data = new byte[length];
-                    reader.ReadBytesSafe(ref data, length);
-                    SyncedInstance<Config>.SyncInstance(data);
-                    CustomMoonPricesMain.CMPLogger.LogMessage("Successfully synced config with host.");
-                }
+                CustomMoonPricesMain.CMPLogger.LogError("Config sync error: Host could not sync.");
+                return;
+            }
+
+            byte[] data = new byte[val];
+            reader.ReadBytesSafe(ref data, val);
+
+            try
+            {
+                SyncInstance(data);
+
+                using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
+                    MessageManager.SendNamedMessage("CMP_SC", 0UL, messageStream);
+            }
+            catch (Exception e)
+            {
+                CustomMoonPricesMain.CMPLogger.LogError($"Error syncing config instance!\n{e}");
             }
         }
 
         public static void OnSettingChange(ulong _, FastBufferReader reader)
         {
-            Config.RequestSync();
+            if(!IsClient) return;
+
+            RequestSync();
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerControllerB), "ConnectClientToPlayerObject")]
-        public static void InitializeLocalPlayer()
+        public static void OnReceivedSync(ulong senderClientId, FastBufferReader messagePayload)
         {
-            if (SyncedInstance<Config>.IsHost)
-            {
-                // ISSUE: reference to a compiler-generated field
-                // ISSUE: reference to a compiler-generated field
-                SyncedInstance<Config>.MessageManager.RegisterNamedMessageHandler("CustomMoonPrices_OnRequestConfigSync", Config.OnRequestSync);
-                SyncedInstance<Config>.Synced = true;
-                Config.RequestSync();
-            }
-            else
-            {
-                SyncedInstance<Config>.Synced = false;
-                // ISSUE: reference to a compiler-generated field
-                // ISSUE: reference to a compiler-generated field
-                SyncedInstance<Config>.MessageManager.RegisterNamedMessageHandler("CustomMoonPrices_OnReceiveConfigSync", Config.OnReceiveSync);
-                SyncedInstance<Config>.MessageManager.RegisterNamedMessageHandler("CustomMoonPrices_ResyncConfigOnChange", Config.OnSettingChange);
-                Config.RequestSync();
-            }
+            if (!IsHost) return;
+
+            CustomMoonPricesMain.CMPLogger.LogMessage("Client Succesfully Synced.");
         }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameNetworkManager), "StartDisconnect")]
-        public static void PlayerLeave() => SyncedInstance<Config>.RevertSync();
-
     }
 }

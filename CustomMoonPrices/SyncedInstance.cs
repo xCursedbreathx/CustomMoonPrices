@@ -12,10 +12,7 @@ namespace LCCustomMoonPrices
         [NonSerialized]
         protected static int IntSize = 4;
 
-        internal static CustomMessagingManager MessageManager
-        {
-            get => NetworkManager.Singleton.CustomMessagingManager;
-        }
+        internal static CustomMessagingManager MessageManager => NetworkManager.Singleton.CustomMessagingManager;
 
         internal static bool IsClient => NetworkManager.Singleton.IsClient;
 
