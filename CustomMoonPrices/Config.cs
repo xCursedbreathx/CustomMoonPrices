@@ -1,6 +1,8 @@
 ﻿using LCCustomMoonPrices;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection.Emit;
 using Unity.Collections;
 using Unity.Netcode;
 
@@ -25,9 +27,9 @@ namespace CustomMoonPrices
 
             Config.Instance.moonData[moonname].setEnabled(enabled);
 
-            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
+            using (FastBufferWriter messageStream = new FastBufferWriter(30000, Allocator.Temp))
 
-                MessageManager.SendNamedMessageToAll("CMP_SC", messageStream);
+                MessageManager.SendNamedMessageToAll("CMP_OSC", messageStream);
 
         }
 
@@ -38,55 +40,69 @@ namespace CustomMoonPrices
 
             Config.Instance.moonData[moonname].setPrice(price);
 
-            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
+            using (FastBufferWriter messageStream = new FastBufferWriter(30000, Allocator.Temp))
 
-                MessageManager.SendNamedMessageToAll("CMP_SC", messageStream);
+                MessageManager.SendNamedMessageToAll("CMP_OSC", messageStream);
 
         }
 
-        public static void RequestSync()
+        internal static void RequestSync()
         {
-            CustomMoonPricesMain.CMPLogger.LogMessage("Requesting config sync...");
-
             if (!IsClient) return;
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("Sending request to host...");
-
-            using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
-                MessageManager.SendNamedMessage("CMP_ORCS", 0UL, messageStream);
-
-            CustomMoonPricesMain.CMPLogger.LogMessage("Sending request to host completed");
-        }
-
-        public static void OnRequestSync(ulong clientId, FastBufferReader _)
-        {
-
-            if (!IsHost) return;
-
-            byte[] bytes = SerializeToBytes(Instance);
-            int length = bytes.Length;
-            using (FastBufferWriter messageStream = new FastBufferWriter(length + IntSize, Allocator.Temp))
+            using (FastBufferWriter message = new FastBufferWriter(30000, Allocator.Temp))
             {
 
-                CustomMoonPricesMain.CMPLogger.LogMessage("Trying to Write Config into Stream");
+                MessageManager.SendNamedMessage("CMP_ORS", 0UL, message);
 
-                try
-                {
-                    messageStream.WriteValueSafe<int>(in length, new FastBufferWriter.ForPrimitives());
-                    messageStream.WriteBytesSafe(bytes);
-
-                    MessageManager.SendNamedMessage("CMP_ORS", clientId, messageStream);
-                }
-                catch (Exception ex)
-                {
-                    CustomMoonPricesMain.CMPLogger.LogDebug(string.Format("Error occurred syncing config with client: {0}\n{1}", clientId, ex));
-                }
+                // Method `OnRequestSync` will then get called on host.
             }
 
         }
 
-        public static void OnReceiveSync(ulong _, FastBufferReader reader)
+        internal static void OnRequestSync(ulong clientId, FastBufferReader _)
         {
+            if (!IsHost) return;
+
+            CustomMoonPricesMain.CMPLogger.LogMessage($"Config sync request received from client: {clientId}");
+
+            byte[] array = SerializeToBytes(Config.Instance);
+            int value = array.Length;
+            int MaxSize = value + IntSize;
+
+            using (FastBufferWriter message = new FastBufferWriter(MaxSize, Allocator.Temp))
+            {
+
+                try
+                {
+
+                    bool fragment = message.Capacity > 1000;
+                    NetworkDelivery delivery = fragment ? NetworkDelivery.ReliableFragmentedSequenced : NetworkDelivery.Reliable;
+
+                    if (fragment) CustomMoonPricesMain.CMPLogger.LogError(
+                        $"Size of stream ({message.Capacity}) was past the max buffer size.\n" +
+                        "Config instance will be sent in fragments to avoid overflowing the buffer."
+                    );
+
+                    message.WriteValueSafe(in value, default);
+                    message.WriteBytesSafe(array, value);
+
+                    MessageManager.SendNamedMessage("CMP_ORCS", clientId, message, delivery);
+
+                }
+                catch (Exception e)
+                {
+                    CustomMoonPricesMain.CMPLogger.LogMessage($"Error occurred syncing config with client: {clientId}\n{e}");
+                }
+
+            }
+
+        }
+
+        internal static void OnReceiveSync(ulong _, FastBufferReader reader)
+        {
+            CustomMoonPricesMain.CMPLogger.LogMessage("Config sync received from host.");
+
             if (!reader.TryBeginRead(IntSize))
             {
                 CustomMoonPricesMain.CMPLogger.LogError("Config sync error: Could not begin reading buffer.");
@@ -94,6 +110,7 @@ namespace CustomMoonPrices
             }
 
             reader.ReadValueSafe(out int val, default);
+
             if (!reader.TryBeginRead(val))
             {
                 CustomMoonPricesMain.CMPLogger.LogError("Config sync error: Host could not sync.");
@@ -106,9 +123,6 @@ namespace CustomMoonPrices
             try
             {
                 SyncInstance(data);
-
-                using (FastBufferWriter messageStream = new FastBufferWriter(IntSize, Allocator.Temp))
-                    MessageManager.SendNamedMessage("CMP_SC", 0UL, messageStream);
             }
             catch (Exception e)
             {
@@ -116,18 +130,18 @@ namespace CustomMoonPrices
             }
         }
 
-        public static void OnSettingChange(ulong _, FastBufferReader reader)
+        internal static void OnSettingChange(ulong _, FastBufferReader reader)
         {
             if(!IsClient) return;
 
-            RequestSync();
+            Config.RequestSync();
         }
 
-        public static void OnReceivedSync(ulong senderClientId, FastBufferReader messagePayload)
+        internal static void OnReceivedSync(ulong senderClientId, FastBufferReader messagePayload)
         {
             if (!IsHost) return;
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("Client Succesfully Synced.");
+            CustomMoonPricesMain.CMPLogger.LogMessage("Client " + senderClientId + " Succesfully Synced.");
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using CustomMoonPrices;
 using System;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Netcode;
 
@@ -9,18 +10,16 @@ namespace LCCustomMoonPrices
     [Serializable]
     public class SyncedInstance<T>
     {
+        static readonly DataContractSerializer serializer = new DataContractSerializer(typeof(T));
+        internal static CustomMessagingManager MessageManager => NetworkManager.Singleton.CustomMessagingManager;
+        internal static bool IsClient => NetworkManager.Singleton.IsClient;
+        internal static bool IsHost => NetworkManager.Singleton.IsHost;
+
         [NonSerialized]
         protected static int IntSize = 4;
 
-        internal static CustomMessagingManager MessageManager => NetworkManager.Singleton.CustomMessagingManager;
-
-        internal static bool IsClient => NetworkManager.Singleton.IsClient;
-
-        internal static bool IsHost => NetworkManager.Singleton.IsHost;
-
-        public static T Default { get; set; }
-
-        public static T Instance { get; set; }
+        public static T Default { get; private set; }
+        public static T Instance { get; private set; }
 
         public static bool Synced { get; internal set; }
 
@@ -28,6 +27,8 @@ namespace LCCustomMoonPrices
         {
             SyncedInstance<T>.Default = instance;
             SyncedInstance<T>.Instance = instance;
+
+            IntSize = sizeof(int);
         }
 
         internal static void SyncInstance(byte[] data)
@@ -44,12 +45,11 @@ namespace LCCustomMoonPrices
 
         public static byte[] SerializeToBytes(T val)
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
             using (MemoryStream serializationStream = new MemoryStream())
             {
                 try
                 {
-                    binaryFormatter.Serialize(serializationStream, val);
+                    serializer.WriteObject(serializationStream, val);
                     return serializationStream.ToArray();
                 }
                 catch (Exception ex)
@@ -67,8 +67,7 @@ namespace LCCustomMoonPrices
             {
                 try
                 {
-                    CustomMoonPricesMain.CMPLogger.LogMessage("Deserializing instance...");
-                    return (T)binaryFormatter.Deserialize(serializationStream);
+                    return (T)serializer.ReadObject(serializationStream);
                 }
                 catch (Exception ex)
                 {

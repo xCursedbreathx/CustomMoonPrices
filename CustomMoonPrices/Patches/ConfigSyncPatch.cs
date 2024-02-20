@@ -12,7 +12,7 @@ namespace CustomMoonPrices.Patches
         {
             if (SyncedInstance<Config>.IsHost)
             {
-                Config.MessageManager.RegisterNamedMessageHandler("CMP_ORCS", Config.OnRequestSync);
+                Config.MessageManager.RegisterNamedMessageHandler("CMP_ORS", Config.OnRequestSync);
                 Config.MessageManager.RegisterNamedMessageHandler("CMP_SC", Config.OnReceivedSync);
                 Config.Synced = true;
             }
@@ -20,7 +20,7 @@ namespace CustomMoonPrices.Patches
             {
                 Config.Synced = false;
                 Config.MessageManager.RegisterNamedMessageHandler("CMP_OSC", Config.OnSettingChange);
-                Config.MessageManager.RegisterNamedMessageHandler("CMP_ORS", Config.OnReceiveSync);
+                Config.MessageManager.RegisterNamedMessageHandler("CMP_ORCS", Config.OnReceiveSync);
                 Config.RequestSync();
             }
         }
