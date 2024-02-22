@@ -16,7 +16,7 @@ namespace CustomMoonPrices
     {
         public const String UMID = "zz.cursedbreath.custommoonprices";
         public const String NAME = "Custom Moon Prices";
-        public const String VERSION = "1.0.0";
+        public const String VERSION = "1.0.1";
 
         private Harmony harmony;
 

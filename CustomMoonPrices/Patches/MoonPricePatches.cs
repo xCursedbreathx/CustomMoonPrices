@@ -52,17 +52,15 @@ namespace CustomMoonPrices.Patches
 
             if (MoonPricePatches.terminal == null)
             {
-                CustomMoonPricesMain.CMPLogger.LogError("Terminal not found!");
+                CustomMoonPricesMain.CMPLogger.LogDebug("Terminal not found!");
             }
             else
             {
-                CustomMoonPricesMain.CMPLogger.LogInfo("Terminal found!");
+                CustomMoonPricesMain.CMPLogger.LogDebug("Terminal found!");
             }
 
             foreach (SelectableLevel level in StartOfRound.Instance.levels)
             {
-
-                CustomMoonPricesMain.CMPLogger.LogInfo("PlanetName: " + level);
 
                 if (!level.name.Contains("Company"))
                 {
@@ -80,7 +78,7 @@ namespace CustomMoonPrices.Patches
                         configname = level.name.Replace("Level", "").Trim().ToLower();
                     }
 
-                    CustomMoonPricesMain.CMPLogger.LogInfo("ConfigName: " + configname);
+                    CustomMoonPricesMain.CMPLogger.LogDebug("ConfigName: " + configname);
 
                     var ConfigEntry = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.");
 
@@ -115,11 +113,11 @@ namespace CustomMoonPrices.Patches
 
             }
 
-            foreach(TerminalNode node in MoonPricePatches.terminal.terminalNodes.terminalNodes)
+            foreach (TerminalNode node in MoonPricePatches.terminal.terminalNodes.terminalNodes)
             {
                 if (node.buyRerouteToMoon != -2)
                 {
-                    
+
                 }
             }
 
@@ -150,7 +148,7 @@ namespace CustomMoonPrices.Patches
 
             if (moonname == null)
             {
-                CustomMoonPricesMain.CMPLogger.LogError("Moon not found (Just a Reminder when not a moon node)!");
+                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
                 return;
             }
 
@@ -168,7 +166,7 @@ namespace CustomMoonPrices.Patches
         private static void LoadNewNodePatchAfter(ref TerminalNode node)
         {
 
-            if(MoonPricePatches.totalCostOfItems == -5) return;
+            if (MoonPricePatches.totalCostOfItems == -5) return;
 
             String moonname = node.name;
 
@@ -187,7 +185,7 @@ namespace CustomMoonPrices.Patches
 
             if (moonname == null)
             {
-                CustomMoonPricesMain.CMPLogger.LogError("Moon not found (Just a Reminder when not a moon node)!");
+                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
                 return;
             }
 
@@ -211,8 +209,6 @@ namespace CustomMoonPrices.Patches
             if (node == null || node.buyRerouteToMoon == -1)
                 return;
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("NodeName: " + node.name);
-
             String moonname = node.name;
 
             if (moonname.Contains("route"))
@@ -227,6 +223,12 @@ namespace CustomMoonPrices.Patches
             }
 
             moonname = GetMoonName(moonname);
+
+            if (moonname == null)
+            {
+                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
+                return;
+            }
 
             if (Config.Instance.moonData[moonname].getEnabled())
             {

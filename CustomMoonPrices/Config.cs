@@ -64,7 +64,7 @@ namespace CustomMoonPrices
         {
             if (!IsHost) return;
 
-            CustomMoonPricesMain.CMPLogger.LogMessage($"Config sync request received from client: {clientId}");
+            CustomMoonPricesMain.CMPLogger.LogDebug($"Config sync request received from client: {clientId}");
 
             byte[] array = SerializeToBytes(Config.Instance);
             int value = array.Length;
@@ -79,7 +79,7 @@ namespace CustomMoonPrices
                     bool fragment = message.Capacity > 1000;
                     NetworkDelivery delivery = fragment ? NetworkDelivery.ReliableFragmentedSequenced : NetworkDelivery.Reliable;
 
-                    if (fragment) CustomMoonPricesMain.CMPLogger.LogError(
+                    if (fragment) CustomMoonPricesMain.CMPLogger.LogDebug(
                         $"Size of stream ({message.Capacity}) was past the max buffer size.\n" +
                         "Config instance will be sent in fragments to avoid overflowing the buffer."
                     );
@@ -92,7 +92,7 @@ namespace CustomMoonPrices
                 }
                 catch (Exception e)
                 {
-                    CustomMoonPricesMain.CMPLogger.LogMessage($"Error occurred syncing config with client: {clientId}\n{e}");
+                    CustomMoonPricesMain.CMPLogger.LogDebug($"Error occurred syncing config with client: {clientId}\n{e}");
                 }
 
             }
@@ -101,7 +101,7 @@ namespace CustomMoonPrices
 
         internal static void OnReceiveSync(ulong _, FastBufferReader reader)
         {
-            CustomMoonPricesMain.CMPLogger.LogMessage("Config sync received from host.");
+            CustomMoonPricesMain.CMPLogger.LogDebug("Config sync received from host.");
 
             if (!reader.TryBeginRead(IntSize))
             {
@@ -123,6 +123,10 @@ namespace CustomMoonPrices
             try
             {
                 SyncInstance(data);
+
+                using (FastBufferWriter messageStream = new FastBufferWriter(30000, Allocator.Temp))
+
+                    MessageManager.SendNamedMessage("CMP_SC", 0UL, messageStream);
             }
             catch (Exception e)
             {
@@ -141,7 +145,7 @@ namespace CustomMoonPrices
         {
             if (!IsHost) return;
 
-            CustomMoonPricesMain.CMPLogger.LogMessage("Client " + senderClientId + " Succesfully Synced.");
+            CustomMoonPricesMain.CMPLogger.LogDebug("Client " + senderClientId + " Succesfully Synced.");
         }
     }
 }
