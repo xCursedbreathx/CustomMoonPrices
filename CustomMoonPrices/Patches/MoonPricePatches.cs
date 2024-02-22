@@ -113,11 +113,11 @@ namespace CustomMoonPrices.Patches
 
             }
 
-            foreach(TerminalNode node in MoonPricePatches.terminal.terminalNodes.terminalNodes)
+            foreach (TerminalNode node in MoonPricePatches.terminal.terminalNodes.terminalNodes)
             {
                 if (node.buyRerouteToMoon != -2)
                 {
-                    
+
                 }
             }
 
@@ -166,7 +166,7 @@ namespace CustomMoonPrices.Patches
         private static void LoadNewNodePatchAfter(ref TerminalNode node)
         {
 
-            if(MoonPricePatches.totalCostOfItems == -5) return;
+            if (MoonPricePatches.totalCostOfItems == -5) return;
 
             String moonname = node.name;
 
@@ -223,6 +223,12 @@ namespace CustomMoonPrices.Patches
             }
 
             moonname = GetMoonName(moonname);
+
+            if (moonname == null)
+            {
+                CustomMoonPricesMain.CMPLogger.LogDebug("Moon not found (Just a Reminder when not a moon node)!");
+                return;
+            }
 
             if (Config.Instance.moonData[moonname].getEnabled())
             {
