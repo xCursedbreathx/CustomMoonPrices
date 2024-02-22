@@ -43,6 +43,9 @@
     <Reference Include="LethalConfig">
       <HintPath>..\..\..\Users\janza\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\developement\BepInEx\plugins\AinaVT-LethalConfig\LethalConfig\LethalConfig.dll</HintPath>
     </Reference>
+    <Reference Include="LethalLevelLoader">
+      <HintPath>..\..\..\Users\janza\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\dev-testing\BepInEx\plugins\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime" />
