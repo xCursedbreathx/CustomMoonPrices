@@ -49,7 +49,6 @@ namespace CustomMoonPrices
 
             foreach (PluginInfo pluginInfo in Chainloader.PluginInfos.Values.ToList<PluginInfo>())
             {
-                CustomMoonPricesMain.CMPLogger.LogMessage("PluginGUID: " + pluginInfo.Metadata.GUID);
                 if (pluginInfo.Metadata.GUID == "imabatby.lethallevelloader")
                 {
                     existLethalLevelLoader = true;
