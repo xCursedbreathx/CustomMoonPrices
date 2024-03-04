@@ -1,9 +1,11 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using CustomMoonPrices.Patches;
 using HarmonyLib;
 using System;
+using System.Linq;
 using Unity.Netcode;
 
 namespace CustomMoonPrices
@@ -16,13 +18,15 @@ namespace CustomMoonPrices
     {
         public const String UMID = "zz.cursedbreath.custommoonprices";
         public const String NAME = "Custom Moon Prices";
-        public const String VERSION = "1.0.1";
+        public const String VERSION = "1.1.0";
 
         private Harmony harmony;
 
         public static CustomMoonPricesMain CustomMoonPricesMainInstance;
 
         public static ConfigFile LethalConfigSettings;
+
+        public static bool existLethalLevelLoader = false;
 
 
 
@@ -42,6 +46,14 @@ namespace CustomMoonPrices
 
             harmony.PatchAll(typeof (MoonPricePatches));
             harmony.PatchAll(typeof (ConfigSyncPatch));
+
+            foreach (PluginInfo pluginInfo in Chainloader.PluginInfos.Values.ToList<PluginInfo>())
+            {
+                if (pluginInfo.Metadata.GUID == "imabatby.lethallevelloader")
+                {
+                    existLethalLevelLoader = true;
+                }
+            }
 
 
         }
