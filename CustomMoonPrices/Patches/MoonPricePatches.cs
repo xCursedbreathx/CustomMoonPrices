@@ -191,7 +191,14 @@ namespace CustomMoonPrices.Patches
                 moonname = moonname.Replace("Confirm", "");
             }
 
-            if (GetMoonName(moonname) != null) moonname = GetMoonName(moonname);
+            if (GetMoonName(moonname) != null)
+            {
+                moonname = GetMoonName(moonname);
+            }
+            else
+            {
+                moonname = new String(moonname.SkipWhile((char c) => !char.IsLetter(c)).ToArray());
+            }
 
             CustomMoonPricesMain.CMPLogger.LogDebug("Moonname: " + moonname);
 
@@ -207,19 +214,26 @@ namespace CustomMoonPrices.Patches
                 return;
             }
 
-            if (defaultMoonPrices[moonname] == 0)
-            {
-                defaultMoonPrices[moonname] = node.itemCost;
-            }
+            try {
 
-            if (Config.Instance.moonData[moonname].getEnabled())
-            {
-                totalCostOfItems = (int)terminalTraverse.GetValue();
+                if (defaultMoonPrices[moonname] == 0)
+                {
+                    defaultMoonPrices[moonname] = node.itemCost;
+                }
 
-                terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
-            } else
-            {
-                terminalTraverse.SetValue(defaultMoonPrices[moonname]);
+                if (Config.Instance.moonData[moonname].getEnabled())
+                {
+                    totalCostOfItems = (int)terminalTraverse.GetValue();
+
+                    terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
+                }
+                else
+                {
+                    terminalTraverse.SetValue(defaultMoonPrices[moonname]);
+                }
+
+            } catch (Exception e) { 
+                
             }
 
         }
@@ -245,7 +259,14 @@ namespace CustomMoonPrices.Patches
                 moonname = moonname.Replace("Confirm", "");
             }
 
-            if(GetMoonName(moonname) != null) moonname = GetMoonName(moonname);
+            if (GetMoonName(moonname) != null)
+            {
+                moonname = GetMoonName(moonname);
+            }
+            else
+            {
+                moonname = new String(moonname.SkipWhile((char c) => !char.IsLetter(c)).ToArray());
+            }
 
             CustomMoonPricesMain.CMPLogger.LogDebug("Moonname: " + moonname);
 
@@ -261,17 +282,25 @@ namespace CustomMoonPrices.Patches
                 return;
             }
 
-            if (Config.Instance.moonData[moonname].getEnabled())
-            {
+            try {
 
-                terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
+                if (Config.Instance.moonData[moonname].getEnabled())
+                {
 
-            } else
-            {
-                terminalTraverse.SetValue(defaultMoonPrices[moonname]);
+                    terminalTraverse.SetValue(Config.Instance.moonData[moonname].getPrice());
+
+                }
+                else
+                {
+                    terminalTraverse.SetValue(defaultMoonPrices[moonname]);
+                }
+
+                totalCostOfItems = -5;
+
+            } catch (Exception ex) { 
+            
             }
 
-            totalCostOfItems = -5;
         }
 
 
@@ -295,7 +324,14 @@ namespace CustomMoonPrices.Patches
                 moonname = moonname.Replace("Confirm", "");
             }
 
-            if (GetMoonName(moonname) != null) moonname = GetMoonName(moonname);
+            if (GetMoonName(moonname) != null) 
+            {
+                moonname = GetMoonName(moonname);
+            } 
+            else
+            {
+                moonname = new String(moonname.SkipWhile((char c) => !char.IsLetter(c)).ToArray());
+            }
 
             CustomMoonPricesMain.CMPLogger.LogDebug("Moonname: " + moonname);
 
@@ -311,12 +347,19 @@ namespace CustomMoonPrices.Patches
                 return;
             }
 
-            if (Config.Instance.moonData[moonname].getEnabled())
-            {
-                node.itemCost = Config.Instance.moonData[moonname].getPrice();
-            } else
-            {
-                node.itemCost = defaultMoonPrices[moonname];
+            try {
+
+                if (Config.Instance.moonData[moonname].getEnabled())
+                {
+                    node.itemCost = Config.Instance.moonData[moonname].getPrice();
+                }
+                else
+                {
+                    node.itemCost = defaultMoonPrices[moonname];
+                }
+
+            } catch (Exception e) { 
+            
             }
 
         }
