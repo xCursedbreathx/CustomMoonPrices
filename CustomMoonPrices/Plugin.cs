@@ -20,6 +20,7 @@ namespace CustomMoonPrices
         public const String NAME = "Custom Moon Prices";
         public const String VERSION = "1.1.2";
 
+
         private Harmony harmony;
 
         public static CustomMoonPricesMain CustomMoonPricesMainInstance;

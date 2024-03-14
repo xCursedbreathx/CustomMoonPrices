@@ -64,44 +64,50 @@ namespace CustomMoonPrices.Patches
         {
             if (CustomMoonPricesMain.existLethalLevelLoader)
             {
-                foreach (ExtendedLevel extendedLevel in PatchedContent.CustomExtendedLevels)
+                try
                 {
-                    String configname = extendedLevel.NumberlessPlanetName;
-                    configname = configname.Replace(" ", "").ToLower();
-
-                    if (configname.Contains("gordion")) continue;
-
-                    var ConfigEntry = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.");
-
-                    var ConfigEntryPrice = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Price", 0, "Setting the custom Price for: " + configname + ".");
-
-                    ConfigEntry.SettingChanged += (sender, e) =>
+                    foreach (ExtendedLevel extendedLevel in PatchedContent.CustomExtendedLevels)
                     {
-                        bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
+                        String configname = extendedLevel.NumberlessPlanetName;
+                        configname = configname.Replace(" ", "").ToLower();
 
-                        Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
-                    };
+                        if (configname.Contains("gordion")) continue;
 
-                    ConfigEntryPrice.SettingChanged += (sender, e) =>
-                    {
-                        int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
+                        var ConfigEntry = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.");
 
-                        Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
-                    };
+                        var ConfigEntryPrice = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Price", 0, "Setting the custom Price for: " + configname + ".");
 
-                    CustomMoonPricesMain.LethalConfigSettings.Save();
+                        ConfigEntry.SettingChanged += (sender, e) =>
+                        {
+                            bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
 
-                    Config.Instance.moonData[configname] = new moonData(ConfigEntry.Value, ConfigEntryPrice.Value);
+                            Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
+                        };
 
-                    var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
+                        ConfigEntryPrice.SettingChanged += (sender, e) =>
+                        {
+                            int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
 
-                    var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice);
+                            Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
+                        };
 
-                    LethalConfigManager.AddConfigItem(ConfigEntryCheckbox);
-                    LethalConfigManager.AddConfigItem(ConfigEntryPriceInt);
+                        CustomMoonPricesMain.LethalConfigSettings.Save();
 
-                    defaultMoonPrices.Add(configname, extendedLevel.RoutePrice);
+                        Config.Instance.moonData[configname] = new moonData(ConfigEntry.Value, ConfigEntryPrice.Value);
 
+                        var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
+
+                        var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice);
+
+                        LethalConfigManager.AddConfigItem(ConfigEntryCheckbox);
+                        LethalConfigManager.AddConfigItem(ConfigEntryPriceInt);
+
+                        defaultMoonPrices.Add(configname, extendedLevel.RoutePrice);
+
+                    }
+                } catch (Exception e)
+                {
+                    CustomMoonPricesMain.CMPLogger.LogError("Error in finding Adding Moons to Dictionary: " + e);
                 }
             }
         }
@@ -121,51 +127,64 @@ namespace CustomMoonPrices.Patches
             {
                 CustomMoonPricesMain.CMPLogger.LogDebug("Terminal found!");
             }
-            foreach (SelectableLevel level in StartOfRound.Instance.levels)
+            try
             {
 
-                if (!level.name.Contains("Company"))
+                foreach (SelectableLevel level in StartOfRound.Instance.levels)
                 {
 
-                    String configname;
+                        if (!level.name.Contains("Company"))
+                        {
 
-                    configname = GetNumberlessPlanetName(level).ToLower();
+                            String configname;
 
-                    CustomMoonPricesMain.CMPLogger.LogDebug("ConfigName: " + configname);
+                            configname = GetNumberlessPlanetName(level).ToLower();
 
-                    var ConfigEntry = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.");
+                            CustomMoonPricesMain.CMPLogger.LogDebug("ConfigName: " + configname);
 
-                    var ConfigEntryPrice = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Price", 0, "Setting the custom Price for: " + configname + ".");
+                            var ConfigEntry = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.");
 
-                    ConfigEntry.SettingChanged += (sender, e) =>
-                    {
-                        bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
+                            var ConfigEntryPrice = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Price", 0, "Setting the custom Price for: " + configname + ".");
 
-                        Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
-                    };
+                            ConfigEntry.SettingChanged += (sender, e) =>
+                            {
+                                bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
 
-                    ConfigEntryPrice.SettingChanged += (sender, e) =>
-                    {
-                        int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
+                                Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
+                            };
 
-                        Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
-                    };
+                            ConfigEntryPrice.SettingChanged += (sender, e) =>
+                            {
+                                int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
 
-                    CustomMoonPricesMain.LethalConfigSettings.Save();
+                                Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
+                            };
 
-                    Config.Instance.moonData[configname] = new moonData(ConfigEntry.Value, ConfigEntryPrice.Value);
+                            CustomMoonPricesMain.LethalConfigSettings.Save();
 
-                    var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
+                            if (Config.Instance.moonData.ContainsKey(configname));
 
-                    var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice);
+                            var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
 
-                    LethalConfigManager.AddConfigItem(ConfigEntryCheckbox);
-                    LethalConfigManager.AddConfigItem(ConfigEntryPriceInt);
+                            var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice);
 
-                    defaultMoonPrices.Add(configname, 0);
+                            LethalConfigManager.AddConfigItem(ConfigEntryCheckbox);
+                            LethalConfigManager.AddConfigItem(ConfigEntryPriceInt);
+
+                            defaultMoonPrices.Add(configname, 0);
+
+                            if (Config.Instance.moonData.ContainsKey(configname)) continue;
+
+                            Config.Instance.moonData[configname] = new moonData(ConfigEntry.Value, ConfigEntryPrice.Value);
+
+                        }
 
                 }
 
+            }
+            catch (Exception e)
+            {
+                CustomMoonPricesMain.CMPLogger.LogError("Error in finding Adding Moons to Dictionary: " + e);
             }
 
         }
