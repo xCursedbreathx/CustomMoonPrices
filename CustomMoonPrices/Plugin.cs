@@ -16,9 +16,10 @@ namespace CustomMoonPrices
     [BepInProcess("Lethal Company.exe")]
     public class CustomMoonPricesMain : BaseUnityPlugin
     {
+
         public const String UMID = "zz.cursedbreath.custommoonprices";
         public const String NAME = "Custom Moon Prices";
-        public const String VERSION = "1.1.2";
+        public const String VERSION = "1.1.4";
 
 
         private Harmony harmony;

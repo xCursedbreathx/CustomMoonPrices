@@ -1,12 +1,11 @@
 ﻿using HarmonyLib;
-using LethalConfig.ConfigItems;
 using LethalConfig;
 using System;
 using UnityEngine;
 using LethalLevelLoader;
-using Unity.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using LethalConfig.ConfigItems;
 
 namespace CustomMoonPrices.Patches
 {
@@ -164,14 +163,14 @@ namespace CustomMoonPrices.Patches
 
                         ConfigEntry.SettingChanged += (sender, e) =>
                         {
-                            bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<bool>(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
+                            bool ConfigEnabledMoons = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Enable", false, "Setting if custom Price for: " + configname + " should be applied.").Value;
 
                             Config.Instance.updateMoonEnabled(configname, ConfigEnabledMoons);
                         };
 
                         ConfigEntryPrice.SettingChanged += (sender, e) =>
                         {
-                            int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind<int>(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
+                            int ConfigPriceMoons = CustomMoonPricesMain.LethalConfigSettings.Bind(configname, "Price", 0, "Setting the custom Price for: " + configname + ".").Value;
 
                             Config.Instance.updateMoonPrice(configname, ConfigPriceMoons);
                         };
@@ -194,9 +193,9 @@ namespace CustomMoonPrices.Patches
 
                         }
 
-                        var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry);
+                        var ConfigEntryCheckbox = new BoolCheckBoxConfigItem(ConfigEntry, false);
 
-                        var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice);
+                        var ConfigEntryPriceInt = new IntInputFieldConfigItem(ConfigEntryPrice, false);
 
                         LethalConfigManager.AddConfigItem(ConfigEntryCheckbox);
                         LethalConfigManager.AddConfigItem(ConfigEntryPriceInt);
