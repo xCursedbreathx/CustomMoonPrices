@@ -51,6 +51,10 @@ namespace CustomMoonPrices.Patches
 
                 case "21": return "offense";
 
+                case "5": return "embrion";
+
+                case "68": return "artifice";
+
                 case null: return null;
             }
 
